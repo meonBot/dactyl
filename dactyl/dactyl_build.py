@@ -140,6 +140,10 @@ class DactylBuilder:
         es_data = {}
         matched_only = False
         for page in pages:
+            if page.is_virtual():
+                logger.debug("skipping virtual page: %s" % page)
+                continue
+
             if only_page:
                 if self.match_only_page(only_page, page.data):
                     matched_only = True
@@ -286,7 +290,7 @@ class DactylBuilder:
         else:
             preferred_undefined = jinja2.ChainableUndefined
 
-        loaderset = [jinja2.PackageLoader(__name__)]
+        loaderset = [jinja2.PackageLoader(PACKAGE_NAME)]
         if "template_path" in self.config:
             loaderset.insert(0, jinja2.FileSystemLoader(self.config["template_path"]))
         env = jinja2.Environment(undefined=preferred_undefined,
@@ -444,7 +448,7 @@ class DactylBuilder:
         if not self.config["legacy_prince"]:
             args.append('--no-warn-css')
 
-        pages = self.target.pages
+        pages = [p for p in self.target.pages if not p.is_virtual()]
         if only_page:
             pages = [p for p in pages if self.match_only_page(only_page, p.data)][:1]
             if not len(pages):
